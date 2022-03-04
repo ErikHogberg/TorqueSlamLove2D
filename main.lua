@@ -57,12 +57,19 @@ function love.update(dt)
             player1.touchingGround = false
             player1.y = newY
         else 
+            player1.vY = 0
             if not player1.touchingGround then
                 pillars[pillarIndex] = pillars[pillarIndex] + 5
+                if player1.yDir <0 then
+                    player1.vY = -jumpForce
+                end
             end
+            if player1.y > love.graphics.getHeight() - groundHeight - pillars[pillarIndex] then
+                player1.vX= -player1.vX
+            else
             player1.y = love.graphics.getHeight() - groundHeight - size - pillars[pillarIndex]
-            player1.vY = 0
             player1.touchingGround = true
+            end
         end
     else
         player1.vY = -player1.vY
@@ -156,8 +163,12 @@ function love.keypressed(key)
     end
  end
 function love.keyreleased(key)
-    if key == 'a' and player1.xDir == -1 then
+    if key == 'w' and player1.yDir == -1 then
+        player1.yDir = 0
+    elseif key == 'a' and player1.xDir == -1 then
         player1.xDir = 0
+    elseif key == 's' and player1.yDir == 1 then
+        player1.yDir = 0
     elseif key == 'd' and player1.xDir == 1 then
         player1.xDir = 0
     end
