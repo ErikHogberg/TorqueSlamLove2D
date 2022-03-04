@@ -8,8 +8,11 @@ torque = 0
 xDir = 0
 yDir = 0
 
-accel = 10
 rot = 0
+
+accel = 100
+gravity = 9.82
+drag = 1
 
 size = 10
 
@@ -17,18 +20,44 @@ size = 10
 function love.update(dt)
     vX = vX + xDir * accel * dt
     vY = vY + yDir * accel * dt
-    x = x + vX * dt
-    y = y + vY * dt
-    rot = torque * dt
+    rot = rot + torque * dt
+    newX = x + vX * dt
+    newY = y + vY * dt
+
+    if newX - size > 0
+    and newX + size < love.graphics.getWidth()
+    then
+        x = newX
+    else
+        vX = -vX
+    end    
+
+    if newY - size > 0
+    and newY + size < love.graphics.getHeight()
+    then
+        y = newY
+    else
+        vY = -vY
+    end
+     
+
 end
 
 function love.draw()
+
+    love.graphics.clear(.9,.9,.8)
+
     love.graphics.print("Hello World", 400, 300)
     love.graphics.setColor(.3,.7,0)
     love.graphics.circle('fill', x,y, 10,10)
     love.graphics.setColor(.7, .3, 0)
     
-    love.graphics.rectangle('fill', x,y, 7,10)
+    -- love.graphics.push()
+    love.graphics.translate(x,y)
+    love.graphics.rotate(rot)
+    love.graphics.translate(-x,-y)
+    love.graphics.rectangle('fill', x-size +6,y-size+2, 8,size * 2-4)
+    -- love.graphics.pop()
 end
 
 function love.keypressed(key)
@@ -41,8 +70,9 @@ function love.keypressed(key)
     elseif key == 'd' then
         xDir = 1
     elseif key == 'e' then
-        
+        torque = torque +1
     elseif key == 'q' then
+        torque = torque -1
 
     elseif key == 'escape' then
         love.event.push('quit')
