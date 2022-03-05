@@ -35,6 +35,8 @@ groundHeight = 10
 pillarCount = 6
 pillars = {}
 
+debugval =1
+
 for i = 1, pillarCount do pillars[i] = 0 end
 
 
@@ -57,18 +59,24 @@ function love.update(dt)
             player1.touchingGround = false
             player1.y = newY
         else 
+            oldVY = player1.vY
             player1.vY = 0
             if not player1.touchingGround then
-                pillars[pillarIndex] = pillars[pillarIndex] + 5
+                -- pillars[pillarIndex] = pillars[pillarIndex] + 5
                 if player1.yDir <0 then
                     player1.vY = -jumpForce
                 end
             end
             if player1.y > love.graphics.getHeight() - groundHeight - pillars[pillarIndex] then
                 player1.vX= -player1.vX
-            else
-            player1.y = love.graphics.getHeight() - groundHeight - size - pillars[pillarIndex]
-            player1.touchingGround = true
+            elseif not player1.touchingGround then
+                player1.touchingGround = true
+                debugval = oldVY
+                if oldVY > 200 and math.abs(player1.vX)/player1.vY > 1 then
+                    pillars[pillarCount- pillarIndex+1] = pillars[pillarCount - pillarIndex+1] + player1.torque* 1 + oldVY * .1
+                    player1.torque = 0 
+                end
+                player1.y = love.graphics.getHeight() - groundHeight - size - pillars[pillarIndex]
             end
         end
     else
@@ -111,7 +119,7 @@ function love.draw()
 
     love.graphics.clear(.9,.9,.8)
 
-    love.graphics.print("Hello World. " .. tostring(player1.touchingGround), 400, 300)
+    love.graphics.print("Hello World. " .. tostring(player1.touchingGround) .. "" .. tostring(debugval), 400, 300)
     love.graphics.setColor(.3,.7,0)
     love.graphics.circle('fill', player1.x,player1.y, size,size)
     love.graphics.setColor(.7, .3, 0)
