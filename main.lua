@@ -1,19 +1,53 @@
 
-player1 = {
-    x=100,
-    y=100,
+-- player1 = {
+--     x=100,
+--     y=100,
 
-    vX = 0,
-    vY = 0,
-    torque = 0,
+--     vX = 0,
+--     vY = 0,
+--     torque = 0,
     
-    xDir = 0,
-    yDir = 0,
-    lastDir = 1,
+--     xDir = 0,
+--     yDir = 0,
+--     lastDir = 1,
 
-    rot = 0,
-    touchingGround = false
+--     rot = 0,
+--     touchingGround = false
+-- }
+
+players = {}
+playerCount = 2
+
+keys = {
+    {'w','s','a','d','e','q'},
+    {'i','k','j','l','o','u'},
 }
+
+for i=1,playerCount do
+    players[i] = {
+        x=100 * i,
+        y=100,
+    
+        vX = 0,
+        vY = 0,
+        torque = 0,
+        
+        xDir = 0,
+        yDir = 0,
+        lastDir = 1,
+    
+        rot = 0,
+        touchingGround = false,
+
+        upKey = keys[i][1],
+        downKey = keys[i][2],
+        leftKey = keys[i][3],
+        rightKey = keys[i][4],
+        cwKey = keys[i][5],
+        ccwKey = keys[i][6],
+    }
+end
+
 
 accel = 200
 gravity = 9.82 * 10
@@ -43,81 +77,87 @@ function sign(number)
 end
 
 function love.update(dt)
-    player1.vX = player1.vX + player1.xDir * accel * dt
-    player1.vY = player1.vY + gravity * dt
-    player1.rot = player1.rot + player1.torque * dt
-    -- torque = torque - aDrag * dt
-    newX = player1.x + player1.vX * dt
-    newY = player1.y + player1.vY * dt
 
-    
-    screenWidth = love.graphics.getWidth()
-    pillarWidth = screenWidth/pillarCount
-    pillarIndex = math.floor(player1.x/(pillarWidth))+1
-    newPillarIndex = math.floor((newX + size * sign(newX - player1.x ))/(pillarWidth))+1
-    newPillarHeight = love.graphics.getHeight() - groundHeight -pillars[newPillarIndex]
+    -- TODO: player-to-player collision
 
-    if newY - size > 0 then
-        if newY + size < love.graphics.getHeight() - groundHeight - pillars[pillarIndex] then    
-            player1.touchingGround = false
-            player1.y = newY
-        else 
-            oldVY = player1.vY
-            player1.vY = 0
-            if not player1.touchingGround then
-                -- pillars[pillarIndex] = pillars[pillarIndex] + 5
-                if player1.yDir < 0 then
-                    player1.vY = -jumpForce
+    for i=1,playerCount do
+
+        players[i].vX = players[i].vX + players[i].xDir * accel * dt
+        players[i].vY = players[i].vY + gravity * dt
+        players[i].rot = players[i].rot + players[i].torque * dt
+        -- torque = torque - aDrag * dt
+        newX = players[i].x + players[i].vX * dt
+        newY = players[i].y + players[i].vY * dt
+
+        
+        screenWidth = love.graphics.getWidth()
+        pillarWidth = screenWidth/pillarCount
+        pillarIndex = math.floor(players[i].x/(pillarWidth))+1
+        newPillarIndex = math.floor((newX + size * sign(newX - players[i].x ))/(pillarWidth))+1
+        newPillarHeight = love.graphics.getHeight() - groundHeight -pillars[newPillarIndex]
+
+        if newY - size > 0 then
+            if newY + size < love.graphics.getHeight() - groundHeight - pillars[pillarIndex] then    
+                players[i].touchingGround = false
+                players[i].y = newY
+            else 
+                oldVY = players[i].vY
+                players[i].vY = 0
+                if not players[i].touchingGround then
+                    -- pillars[pillarIndex] = pillars[pillarIndex] + 5
+                    if players[i].yDir < 0 then
+                        players[i].vY = -jumpForce
+                    end
+                end
+                if players[i].y > love.graphics.getHeight() - groundHeight - pillars[pillarIndex] then
+                    -- players[i].vX= -players[i].vX
+                elseif not players[i].touchingGround then
+                    players[i].touchingGround = true
+                    debugval = oldVY
+                    if oldVY > 150 and math.abs(players[i].vX)/players[i].vY > 1 then
+                        pillars[pillarCount- pillarIndex+1] = pillars[pillarCount - pillarIndex+1] + players[i].torque* 1 + oldVY * .1
+                        players[i].torque = 0 
+                    end
+                    players[i].y = love.graphics.getHeight() - groundHeight - size - pillars[pillarIndex]
                 end
             end
-            if player1.y > love.graphics.getHeight() - groundHeight - pillars[pillarIndex] then
-                -- player1.vX= -player1.vX
-            elseif not player1.touchingGround then
-                player1.touchingGround = true
-                debugval = oldVY
-                if oldVY > 150 and math.abs(player1.vX)/player1.vY > 1 then
-                    pillars[pillarCount- pillarIndex+1] = pillars[pillarCount - pillarIndex+1] + player1.torque* 1 + oldVY * .1
-                    player1.torque = 0 
-                end
-                player1.y = love.graphics.getHeight() - groundHeight - size - pillars[pillarIndex]
+        else
+            players[i].vY = -players[i].vY
+        end
+        
+
+        if newX - size > 0
+        and newX + size < love.graphics.getWidth()
+        and newY < newPillarHeight 
+        then
+            players[i].x = newX
+            if players[i].y + size - .1 > newPillarHeight then
+                players[i].y = newPillarHeight - size
             end
-        end
-    else
-        player1.vY = -player1.vY
-    end
-    
-
-    if newX - size > 0
-    and newX + size < love.graphics.getWidth()
-    and newY < newPillarHeight 
-    then
-        player1.x = newX
-        if player1.y + size - .1 > newPillarHeight then
-            player1.y = newPillarHeight - size
-        end
-    else
-        player1.vX = -player1.vX
-        if not player1.touchingGround and player1.yDir < 0 then
-            player1.vY = -jumpForce
-        end
-    end    
-    
-    if player1.touchingGround then
-        player1.vX = player1.vX + (player1.torque * torqueTransfer) * dt
-        if player1.torque < 0 then
-            player1.torque = player1.torque + aDrag * dt
         else
-            player1.torque = player1.torque - aDrag * dt
-        end
+            players[i].vX = -players[i].vX
+            if not players[i].touchingGround and players[i].yDir < 0 then
+                players[i].vY = -jumpForce
+            end
+        end    
+        
+        if players[i].touchingGround then
+            players[i].vX = players[i].vX + (players[i].torque * torqueTransfer) * dt
+            if players[i].torque < 0 then
+                players[i].torque = players[i].torque + aDrag * dt
+            else
+                players[i].torque = players[i].torque - aDrag * dt
+            end
 
-        dragDt = drag * dt
+            dragDt = drag * dt
 
-        if math.abs(dragDt) > math.abs(player1.vX) then player1.vX = 0 end
+            if math.abs(dragDt) > math.abs(players[i].vX) then players[i].vX = 0 end
 
-        if player1.vX < 0 then
-            player1.vX = player1.vX + dragDt
-        else
-            player1.vX = player1.vX - dragDt
+            if players[i].vX < 0 then
+                players[i].vX = players[i].vX + dragDt
+            else
+                players[i].vX = players[i].vX - dragDt
+            end
         end
     end
 
@@ -127,14 +167,12 @@ function love.draw()
 
     love.graphics.clear(.9,.9,.8)
 
-    love.graphics.print("Hello World. " .. tostring(player1.touchingGround) .. " " .. tostring(debugval), 400, 300)
-    love.graphics.setColor(.3,.7,0)
-    love.graphics.circle('fill', player1.x,player1.y, size,size)
-    love.graphics.setColor(.7, .3, 0)
-    
+    love.graphics.setColor(.7,.3,.0)
+    love.graphics.print("Hello World. " .. tostring(players[1].touchingGround) .. " " .. tostring(debugval), 400, 300)
     screenWidth = love.graphics.getWidth()
     screenHeight= love.graphics.getHeight()
     pillarWidth = screenWidth/pillarCount
+
     for i = 1, pillarCount do  
         love.graphics.setColor(i/pillarCount, .3, 0)
         love.graphics.rectangle('fill', 
@@ -145,48 +183,60 @@ function love.draw()
         )
     end    
 
-    love.graphics.push()
-    love.graphics.translate(player1.x,player1.y)
-    love.graphics.rotate(player1.rot)
-    love.graphics.translate(-player1.x,-player1.y)
-    love.graphics.rectangle('fill', player1.x - rectW/2, player1.y - rectH/2, rectW, rectH)
-    love.graphics.pop()
- 
+    for i=1,playerCount do
+        -- TODO: afterimage, trail, or delayed/interpolated render position
+        percent = (i-1)/playerCount
+        love.graphics.setColor(.3,.7 - (percent) * .7, 1-percent)
+        love.graphics.circle('fill', players[i].x,players[i].y, size,size)
+        
+        love.graphics.setColor(.7, .3, .0)
+        love.graphics.push()
+        love.graphics.translate(players[i].x,players[i].y)
+        love.graphics.rotate(players[i].rot)
+        love.graphics.translate(-players[i].x,-players[i].y)
+        love.graphics.rectangle('fill', players[i].x - rectW/2, players[i].y - rectH/2, rectW, rectH)
+        love.graphics.pop()
+    end
 
 end
 
 function love.keypressed(key)
-    if key == 'w' then
-        player1.yDir = -1
-        if player1.touchingGround then
-            player1.vY = -jumpForce
-        end
-    elseif key == 'a' then
-        player1.xDir = -1
-        player1.lastDir = -1
-    elseif key == 's' then
-        player1.yDir = 1
-    elseif key == 'd' then
-        player1.xDir = 1
-        player1.lastDir = 1
-    elseif key == 'e' then
-        player1.torque = player1.torque +3
-    elseif key == 'q' then
-        player1.torque = player1.torque -3
+    for i=1,playerCount do
+        if key == players[i].upKey then
+            players[i].yDir = -1
+            if players[i].touchingGround then
+                players[i].vY = -jumpForce
+            end
+        elseif key == players[i].leftKey then
+            players[i].xDir = -1
+            players[i].lastDir = -1
+        elseif key == players[i].downKey then
+            players[i].yDir = 1
+        elseif key == players[i].rightKey then
+            players[i].xDir = 1
+            players[i].lastDir = 1
+        elseif key == players[i].cwKey then
+            players[i].torque = players[i].torque + 3
+        elseif key == players[i].ccwKey then
+            players[i].torque = players[i].torque - 3
 
-    elseif key == 'escape' then
-        love.event.push('quit')
+        elseif key == 'escape' then
+            love.event.push('quit')
+        end
     end
- end
+end
+
 function love.keyreleased(key)
-    if key == 'w' and player1.yDir == -1 then
-        player1.yDir = 0
-    elseif key == 'a' and player1.xDir == -1 then
-        player1.xDir = 0
-    elseif key == 's' and player1.yDir == 1 then
-        player1.yDir = 0
-    elseif key == 'd' and player1.xDir == 1 then
-        player1.xDir = 0
+    for i= 1, playerCount do
+        if key == players[i].upKey and players[i].yDir == -1 then
+            players[i].yDir = 0
+        elseif key == players[i].leftKey and players[i].xDir == -1 then
+            players[i].xDir = 0
+        elseif key == players[i].downKey and players[i].yDir == 1 then
+            players[i].yDir = 0
+        elseif key == players[i].rightKey and players[i].xDir == 1 then
+            players[i].xDir = 0
+        end
     end
  end
 
