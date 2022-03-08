@@ -50,19 +50,26 @@ end
 
 
 accel = 200
+rollStrength = 50
+rollImpulseStrength = 10
+
 gravity = 9.82 * 10
+downFactor = 20
 drag = 100
 aDrag = 20
+airTorqueDrag = 1
 torqueTransfer = 30
 
 jumpForce = 150
 
-vCap = 10
+vCap = 100
 
 size = 30
 rectW = 15
 rectH = 45
 groundHeight = 10
+
+turnLoss = .5
 
 
 pillarCount = 6
@@ -82,8 +89,16 @@ function love.update(dt)
 
     for i=1,playerCount do
 
-        players[i].vX = players[i].vX + players[i].xDir * accel * dt
         players[i].vY = players[i].vY + gravity * dt
+
+        -- players[i].vX = players[i].vX + players[i].xDir * accel * dt
+        if players[i].vY > 0 then
+            if players[i].vX > 0 then
+                players[i].vY = players[i].vY + math.max(0, players[i].torque) * downFactor * dt
+            elseif players[i].vX < 0 then
+                players[i].vY = players[i].vY + math.min(0, players[i].torque) * downFactor * dt
+            end
+        end
         players[i].rot = players[i].rot + players[i].torque * dt
         -- torque = torque - aDrag * dt
         newX = players[i].x + players[i].vX * dt
@@ -142,6 +157,9 @@ function love.update(dt)
         end    
         
         if players[i].touchingGround then
+            players[i].torque = players[i].torque + players[i].xDir * rollStrength * dt
+
+            
             players[i].vX = players[i].vX + (players[i].torque * torqueTransfer) * dt
             if players[i].torque < 0 then
                 players[i].torque = players[i].torque + aDrag * dt
@@ -158,7 +176,20 @@ function love.update(dt)
             else
                 players[i].vX = players[i].vX - dragDt
             end
+        else
+            players[i].vX = players[i].vX + (players[i].xDir * accel - sign(players[i].vX)* math.abs( players[i].torque) * airTorqueDrag) * dt
+             
         end
+
+        
+        -- sqrMagnitude = players[i].vX * players[i].vX + players[i].vY * players[i].vY
+        -- if sqrMagnitude > vCap * vCap then
+        --     magnitude = math.sqrt( sqrMagnitude )
+        --     xyRatio = math.max(players[i].vX/math.abs(players[i].vX),0.001)
+        --     players[i].vX = (players[i].vX/magnitude) * vCap
+        --     players[i].Y = (players[i].vY/magnitude) * vCap
+        --     -- players[i].vY = sign(players[i].vY)*(1-xyRatio) * vCap
+        -- end
     end
 
 end
@@ -210,15 +241,21 @@ function love.keypressed(key)
         elseif key == players[i].leftKey then
             players[i].xDir = -1
             players[i].lastDir = -1
+            -- if players[i].vX > 0 then players[i].vX = -players[i].vX*turnLoss end
+
         elseif key == players[i].downKey then
             players[i].yDir = 1
+            if(players[i].vY < 0) then players[i].vY= -players[i].vY end
+            -- players[i].vX = -players[i].vX
         elseif key == players[i].rightKey then
             players[i].xDir = 1
             players[i].lastDir = 1
+            -- if players[i].vX < 0 then players[i].vX = -players[i].vX*turnLoss end
+
         elseif key == players[i].cwKey then
-            players[i].torque = players[i].torque + 3
+            players[i].torque = players[i].torque + rollImpulseStrength
         elseif key == players[i].ccwKey then
-            players[i].torque = players[i].torque - 3
+            players[i].torque = players[i].torque - rollImpulseStrength
 
         elseif key == 'escape' then
             love.event.push('quit')
