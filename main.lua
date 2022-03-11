@@ -1,19 +1,4 @@
 
--- player1 = {
---     x=100,
---     y=100,
-
---     vX = 0,
---     vY = 0,
---     torque = 0,
-    
---     xDir = 0,
---     yDir = 0,
---     lastDir = 1,
-
---     rot = 0,
---     touchingGround = false
--- }
 
 players = {}
 playerCount = 2
@@ -70,7 +55,9 @@ rectH = 45
 groundHeight = 10
 
 turnLoss = .5
-
+launchMul = 1
+torqueToHeight = .5
+velocityToHeight = .1
 
 pillarCount = 6
 pillars = {}
@@ -124,13 +111,16 @@ function love.update(dt)
                         players[i].vY = -jumpForce
                     end
                 end
-                if players[i].y > love.graphics.getHeight() - groundHeight - pillars[pillarIndex] then
+                if players[i].y + size > love.graphics.getHeight() - groundHeight - pillars[pillarIndex] then
                     -- players[i].vX= -players[i].vX
+                    oldY = players[i].y
+                    players[i].y = love.graphics.getHeight() - groundHeight - pillars[pillarIndex] -size
+                    players[i].vY = players[i].vY - (players[i].y - oldVY) * launchMul
                 elseif not players[i].touchingGround then
                     players[i].touchingGround = true
                     debugval = oldVY
                     if oldVY > 150 and math.abs(players[i].vX)/players[i].vY > 1 then
-                        pillars[pillarCount- pillarIndex+1] = pillars[pillarCount - pillarIndex+1] + players[i].torque* 1 + oldVY * .1
+                        pillars[pillarCount- pillarIndex+1] = pillars[pillarCount - pillarIndex+1] + math.abs(players[i].torque) * torqueToHeight + oldVY * velocityToHeight
                         players[i].torque = 0 
                     end
                     players[i].y = love.graphics.getHeight() - groundHeight - size - pillars[pillarIndex]
